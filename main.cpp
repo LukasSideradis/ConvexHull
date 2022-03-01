@@ -8,20 +8,18 @@
 #include <iostream>
 #include <algorithm>
 
-using namespace std;
-
-vector<SDL_Event>& GetFrameEvents() {
-	static vector<SDL_Event> frame_events;
+std::vector<SDL_Event>&GetFrameEvents() {
+	static std::vector<SDL_Event> frame_events;
 	return frame_events;
 }
 
-void Swap(vector<SDL_Point>* arr, int left, int right) {
+void Swap(std::vector<SDL_Point>* arr, int left, int right) {
 	SDL_Point tmp = arr->at(right);
 	arr->at(right) = arr->at(left);
 	arr->at(left) = tmp;
 }
 
-void QuicksortX(vector<SDL_Point>* arr, int left, int right) {
+void QuicksortX(std::vector<SDL_Point>* arr, int left, int right) {
 	if (left < right) {
 		int boundary = left;
 		for (int i = left + 1; i < right; i++) {
@@ -35,7 +33,7 @@ void QuicksortX(vector<SDL_Point>* arr, int left, int right) {
 	}
 }
 
-void QuicksortY(vector<SDL_Point>* arr, int left, int right) {
+void QuicksortY(std::vector<SDL_Point>* arr, int left, int right) {
 	if (left < right) {
 		int boundary = left;
 		for (int i = left + 1; i < right; i++) {
@@ -49,12 +47,13 @@ void QuicksortY(vector<SDL_Point>* arr, int left, int right) {
 	}
 }
 
-vector<SDL_Point> ConvexHull(vector<SDL_Point> points) {
+std::vector<SDL_Point> ConvexHull(std::vector<SDL_Point> points) {
+	// Sort the points so they're processed in the correct order
 	QuicksortX(&points, 0, points.size());
 	QuicksortY(&points, 0, points.size());
 
-	vector<SDL_Point> upper;
-	vector<SDL_Point> lower;
+	std::vector<SDL_Point> upper;
+	std::vector<SDL_Point> lower;
 	// Compute the upper hull
 	upper.emplace_back(points.at(0));
 	upper.emplace_back(points.at(1));
@@ -92,7 +91,8 @@ vector<SDL_Point> ConvexHull(vector<SDL_Point> points) {
 	lower.pop_back();
 	lower.erase(lower.begin());
 
-	vector<SDL_Point> convexHull = upper;
+	// Joins the two sub-hulls together
+	std::vector<SDL_Point> convexHull = upper;
 	convexHull.insert(convexHull.end(), lower.begin(), lower.end());
 	return convexHull;
 }
@@ -102,22 +102,24 @@ int main(int argc, char* argv[]) {
 	IMG_Init(IMG_INIT_PNG);
 	SDL_Window* mainWindow = SDL_CreateWindow("Convex Hull", 40, 40, 800, 800, SDL_WINDOW_SHOWN);
 	SDL_Renderer* mainRenderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	
+
+	// Test data
 	srand(time(NULL));
-	random_device rd;
-	mt19937 generator(rd());
-	uniform_int_distribution<int> distr(50, 750);
+	std::random_device rd;
+	std::mt19937 generator(rd());
+	std::uniform_int_distribution<int> distr(50, 750);
 	int random_number_1 = 0;
 	int random_number_2 = 0;
 
-	vector<SDL_Point> points;
+	std::vector<SDL_Point> points;
 	for (int i = 0; i < 1000; i++) {
 		random_number_1 = distr(generator);
 		random_number_2 = distr(generator);
 		points.emplace_back(SDL_Point{ random_number_1, random_number_2 });
 	}
+	//
 
-	vector<SDL_Point> convexHull = ConvexHull(points);
+	std::vector<SDL_Point> convexHull = ConvexHull(points);
 
 	bool quit = false;
 
@@ -136,13 +138,8 @@ int main(int argc, char* argv[]) {
 		SDL_SetRenderDrawColor(mainRenderer, 0, 0, 0, 255);
 		SDL_RenderClear(mainRenderer);
 
-		SDL_SetRenderDrawColor(mainRenderer, 0, 255, 0, 255);
-		for (auto& p : points) {
-			SDL_RenderDrawPoint(mainRenderer, p.x, p.y);
-		}
-
+		// Draw the hull
 		SDL_SetRenderDrawColor(mainRenderer, 0, 0, 255, 255);
-
 		for (int i = 0; i < convexHull.size(); i++) {
 			if (i == convexHull.size() - 1) {
 				SDL_RenderDrawLine(mainRenderer, convexHull.at(i).x, convexHull.at(i).y, convexHull.at(0).x, convexHull.at(0).y);
@@ -150,6 +147,12 @@ int main(int argc, char* argv[]) {
 			else {
 				SDL_RenderDrawLine(mainRenderer, convexHull.at(i).x, convexHull.at(i).y, convexHull.at(i + 1).x, convexHull.at(i + 1).y);
 			}
+		}
+
+		// Draw the points
+		SDL_SetRenderDrawColor(mainRenderer, 0, 255, 0, 255);
+		for (auto& p : points) {
+			SDL_RenderDrawPoint(mainRenderer, p.x, p.y);
 		}
 
 		SDL_RenderPresent(mainRenderer);
